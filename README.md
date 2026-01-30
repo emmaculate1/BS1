@@ -5,6 +5,7 @@ The project demonstrates the basics of frontend and backend interaction, user in
 
 
 Features
+
 Create a new booking
 View available bookings
 Prevent double booking
