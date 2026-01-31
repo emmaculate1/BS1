@@ -7,7 +7,7 @@ const Signup = () => {
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
-        organization: '',
+        department: '',
         password: '',
         confirmPassword: '',
     });
@@ -32,7 +32,7 @@ const Signup = () => {
                         <Building2 className="text-white w-8 h-8" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">Create an Account</h1>
-                    <p className="text-gray-500 mt-2">Sign up to start booking rooms in your organization</p>
+                    <p className="text-gray-500 mt-2">Sign up to start booking rooms in your department</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,18 +73,18 @@ const Signup = () => {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">Organization</label>
+                        <label className="text-sm font-medium text-gray-700">Department</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Building className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
                                 type="text"
-                                name="organization"
-                                value={formData.organization}
+                                name="department"
+                                value={formData.department}
                                 onChange={handleChange}
                                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 placeholder-gray-400"
-                                placeholder="Your Company"
+                                placeholder="e.g. Engineering"
                                 required
                             />
                         </div>
