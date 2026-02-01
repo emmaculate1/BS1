@@ -4,7 +4,6 @@ import { Plus, Trash2, Edit, LogOut, LayoutGrid, Building2, Users, Clock, Monito
 import AddRoomModal from '../components/AddRoomModal';
 
 const AdminDashboard = () => {
-    console.log('AdminDashboard component function called');
     const navigate = useNavigate();
     const [rooms, setRooms] = useState([]);
     const [activeSessions, setActiveSessions] = useState([]);
