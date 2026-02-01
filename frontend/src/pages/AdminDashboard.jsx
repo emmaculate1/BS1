@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Edit, LogOut, LayoutGrid, Building2, Users, Clock, Monitor, XCircle } from 'lucide-react';
+import { Plus, Trash2, Edit, LogOut, LayoutGrid, Building2, Users, Clock, Monitor, CircleX } from 'lucide-react';
 import AddRoomModal from '../components/AddRoomModal';
 
+console.log('Rendering AdminDashboard component');
+
 const AdminDashboard = () => {
+    console.log('AdminDashboard component function called');
     const navigate = useNavigate();
     const [rooms, setRooms] = useState([]);
     const [activeSessions, setActiveSessions] = useState([]);
@@ -31,13 +34,20 @@ const AdminDashboard = () => {
     }, [navigate]);
 
     const calculateDuration = (loginTime) => {
-        const start = new Date(loginTime);
-        const now = new Date();
-        const diff = Math.floor((now - start) / 60000); // duration in minutes
-        if (diff < 60) return `${diff} mins`;
-        const hours = Math.floor(diff / 60);
-        const mins = diff % 60;
-        return `${hours}h ${mins}m`;
+        if (!loginTime) return 'Unknown';
+        try {
+            const start = new Date(loginTime);
+            if (isNaN(start.getTime())) return 'Invalid';
+            const now = new Date();
+            const diff = Math.floor((now - start) / 60000); // duration in minutes
+            if (diff < 60) return `${diff} mins`;
+            const hours = Math.floor(diff / 60);
+            const mins = diff % 60;
+            return `${hours}h ${mins}m`;
+        } catch (e) {
+            console.error('Error calculating duration:', e);
+            return 'Error';
+        }
     };
 
     const removeSession = (id) => {
@@ -187,7 +197,7 @@ const AdminDashboard = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 <div className="flex items-center">
                                                     <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                    {new Date(session.loginTime).toLocaleTimeString()}
+                                                    {session.loginTime ? new Date(session.loginTime).toLocaleTimeString() : 'N/A'}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{calculateDuration(session.loginTime)}</td>
@@ -202,7 +212,7 @@ const AdminDashboard = () => {
                                                     className="text-red-600 hover:text-red-900 flex items-center justify-end ml-auto"
                                                     title="Disconnect User"
                                                 >
-                                                    <XCircle className="w-4 h-4 mr-1" />
+                                                    <CircleX className="w-4 h-4 mr-1" />
                                                     Disconnect
                                                 </button>
                                             </td>
