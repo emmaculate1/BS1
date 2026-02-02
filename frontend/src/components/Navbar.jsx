@@ -26,8 +26,8 @@ const Navbar = ({ onMenuClick }) => {
                                 <Building2 className="text-white w-6 h-6" />
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold text-gray-900 leading-none">BS1 Swahilipot hub</h1>
-                                <p className="text-sm text-gray-500">Technology</p>
+                                <h1 className="text-lg font-bold text-gray-900 leading-none"> Swahilipot Hub BS1 </h1>
+                                <p className="text-sm text-gray-500">Booking System</p>
                             </div>
                         </div>
                     </div>
