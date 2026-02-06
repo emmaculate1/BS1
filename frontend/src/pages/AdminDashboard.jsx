@@ -116,6 +116,45 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleUpdateStatus = async (bookingId, newStatus) => {
+        const action = newStatus === 'confirmed' ? 'approve' : 'reject';
+        if (!window.confirm(`Are you sure you want to ${action} this booking?`)) return;
+
+        try {
+            const res = await fetch(`http://localhost:3000/bookings/${bookingId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (res.ok) {
+                // Update local state to reflect change instantly
+                setBookings(prev => prev.map(b =>
+                    b.id === bookingId ? { ...b, status: newStatus } : b
+                ));
+
+                // If confirmed, we might want to refresh rooms to show it as taken if it's for today
+                const today = new Date().toLocaleDateString('en-CA');
+                const bookingDate = bookings.find(b => b.id === bookingId)?.booking_date;
+
+                if (bookingDate && bookingDate.includes(today)) {
+                    // Refresh rooms to update status
+                    const roomsRes = await fetch(`http://localhost:3000/rooms?date=${today}`);
+                    const roomsData = await roomsRes.json();
+                    setRooms(roomsData);
+                }
+
+                alert(`Booking ${action}d successfully and user notified!`);
+            } else {
+                const data = await res.json();
+                alert(data.error || `Failed to ${action} booking`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error connecting to server');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             <AddRoomModal
@@ -261,8 +300,22 @@ const AdminDashboard = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button className="text-green-600 hover:text-green-900 mr-3 font-bold">Approve</button>
-                                            <button className="text-red-600 hover:text-red-900 font-bold">Reject</button>
+                                            {booking.status === 'pending' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
+                                                        className="text-green-600 hover:text-green-900 mr-3 font-bold"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(booking.id, 'rejected')}
+                                                        className="text-red-600 hover:text-red-900 font-bold"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </>
+                                            )}
                                         </td>
                                     </tr>
                                 )) : (

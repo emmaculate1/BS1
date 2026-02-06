@@ -11,12 +11,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-    origin: [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:5174',
-        'http://127.0.0.1:5174'
-    ],
+    origin: true, // Allow all origins for dev
     credentials: true
 }));
 
@@ -435,6 +430,84 @@ app.post('/book', async (req, res) => {
     } catch (error) {
         console.error('Booking error:', error);
         res.status(500).json({ error: 'Booking failed' });
+    }
+});
+
+// UPDATE BOOKING STATUS (Approve/Reject)
+app.put('/bookings/:id/status', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['confirmed', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be confirmed or rejected' });
+    }
+    try {
+        const [bookings] = await dbPromise.query(
+            `SELECT b.*, u.full_name, u.email, r.name as room_name 
+             FROM bookings b
+             JOIN users u ON b.user_id = u.id
+             JOIN rooms r ON b.room_id = r.id
+             WHERE b.id = ?`,
+            [id]
+        );
+
+        if (bookings.length === 0) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+
+        const booking = bookings[0];
+
+        // Update status
+        await dbPromise.query('UPDATE bookings SET status = ? WHERE id = ?', [status, id]);
+
+        console.log(`✅ Booking #${id} ${status} by admin`);
+
+        // Send email to user
+        const subject = status === 'confirmed'
+            ? `✅ START PACKING! Your ${booking.type} is Confirmed`
+            : `❌ Update regarding your ${booking.type} request`;
+
+        const htmlContent = status === 'confirmed'
+            ? `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #4CAF50; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #4CAF50;">🎉 Awesome News, ${booking.full_name}!</h2>
+                <p>Your <strong>${booking.type} for ${booking.room_name}</strong> has been officially <strong>APPROVED</strong>.</p>
+                
+                <div style="background: #f0f9f0; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>📅 Date:</strong> ${new Date(booking.booking_date).toDateString()}</p>
+                    <p style="margin: 5px 0;"><strong>⏰ Time:</strong> ${booking.start_time} - ${booking.end_time}</p>
+                    <p style="margin: 5px 0;"><strong>📍 Location:</strong> SwahiliPot Hub</p>
+                </div>
+
+                <p>We're excited to host you! See you there.</p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="${process.env.FRONTEND_URL}/bookings" style="background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Details</a>
+                </div>
+            </div>`
+            : `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #f44336; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #f44336;">Update Regarding Your Request</h2>
+                <p>Hello ${booking.full_name},</p>
+                <p>We received your request for <strong>${booking.room_name}</strong> on ${new Date(booking.booking_date).toDateString()}.</p>
+                <p>Unfortunately, we are unable to approve this specific request at this time.</p>
+                <p>This could be due to a scheduling conflict or maintenance. Please try booking a different room or time slot.</p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="${process.env.FRONTEND_URL}" style="background: #f44336; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Browse Available Rooms</a>
+                </div>
+            </div>`;
+
+        sendMail(
+            booking.email,
+            subject,
+            `Your booking status has been updated to: ${status}`,
+            htmlContent
+        );
+
+        res.json({ message: `Booking ${status} successfully`, bookingId: id, newStatus: status });
+
+    } catch (error) {
+        console.error('Update status error:', error);
+        res.status(500).json({ error: 'Failed to update booking status' });
     }
 });
 
